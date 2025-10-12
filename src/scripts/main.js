@@ -5,19 +5,20 @@ document.addEventListener('click', (e) => {
   const wall = document.querySelector('.wall');
   const spider = document.querySelector('.spider');
 
-  // Якщо елементи не знайдені — не робимо нічого
+  // Захист від помилок
   if (!wall || !spider) {
     return;
   }
 
-  // Якщо .wall має position: static, робимо її позиційним контекстом
-  const wallStyle = getComputedStyle(wall);
-
-  if (wallStyle.position === 'static') {
+  // Якщо .wall не має позиційного контексту — зробимо його таким
+  if (getComputedStyle(wall).position === 'static') {
     wall.style.position = 'relative';
   }
 
-  // Ігноруємо кліки поза межами стіни
+  // Встановлюємо position один раз
+  spider.style.position = 'absolute';
+
+  // Ігноруємо кліки поза .wall
   const wallRect = wall.getBoundingClientRect();
 
   if (
@@ -29,23 +30,24 @@ document.addEventListener('click', (e) => {
     return;
   }
 
-  // Отримуємо розміри павука
   const spiderRect = spider.getBoundingClientRect();
 
-  // Координати кліку всередині стіни
-  const clickX = e.clientX - wallRect.left;
-  const clickY = e.clientY - wallRect.top;
+  // Координати кліку усередині стіни з урахуванням рамок
+  const clickX = e.clientX - wallRect.left - wall.clientLeft;
+  const clickY = e.clientY - wallRect.top - wall.clientTop;
 
   // Центруємо павука
   let targetX = clickX - spiderRect.width / 2;
   let targetY = clickY - spiderRect.height / 2;
 
-  // Обмеження руху, щоб павук не виходив за межі
-  targetX = Math.max(0, Math.min(targetX, wallRect.width - spiderRect.width));
-  targetY = Math.max(0, Math.min(targetY, wallRect.height - spiderRect.height));
+  // Межі руху (без виходу за внутрішню область стіни)
+  const maxX = wall.clientWidth - spiderRect.width;
+  const maxY = wall.clientHeight - spiderRect.height;
 
-  // Встановлюємо позицію (один раз)
-  spider.style.position = 'absolute';
+  targetX = Math.max(0, Math.min(targetX, maxX));
+  targetY = Math.max(0, Math.min(targetY, maxY));
+
+  // Застосовуємо нову позицію
   spider.style.left = `${targetX}px`;
   spider.style.top = `${targetY}px`;
 });
